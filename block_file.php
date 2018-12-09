@@ -9,6 +9,11 @@ class block_file extends block_base
         $this->title = get_string('file', 'block_file');
     }
 
+    public function applicable_formats()
+    {
+        return array('all' => true);
+    }
+
     public function get_content()
     {
         if ($this->content !== null) {
