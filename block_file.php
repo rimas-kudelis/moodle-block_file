@@ -58,8 +58,13 @@ class block_file extends block_base
 
             $mimeType = $file->get_mimetype();
 
-            if ($mimeType === 'application/pdf') {
-                $content = $this->get_content_text_pdf($file, $height);
+            if (in_array($mimeType, [
+                'application/pdf',
+                'application/vnd.oasis.opendocument.presentation',
+                'application/vnd.oasis.opendocument.spreadsheet',
+                'application/vnd.oasis.opendocument.text',
+            ])) {
+                $content = $this->get_content_text_viewerjs($file, $height);
 
                 $content = format_text($content, FORMAT_HTML, $filterOptions);
 
@@ -109,28 +114,6 @@ class block_file extends block_base
         return html_writer::tag('a', $file->get_filename(), ['href' => $this->get_file_url($file)]);
     }
 
-    protected function get_content_text_pdf($file, $height = null)
-    {
-        $styles = [
-            'width' => '100%',
-            'height' => '100%',
-        ];
-
-        if ($height !== null) {
-            $styles['min-height'] = $height;
-        }
-
-        $viewerUrl = new moodle_url('/blocks/file/pdfjs/web/viewer.html');
-        $viewerUrl->param('file', $this->get_file_url($file));
-
-        $attributes = [
-            'src' => $viewerUrl,
-            'style' => $this->build_style_attribute($styles),
-        ];
-
-        return html_writer::tag('iframe', $this->get_content_text_default($file, $height), $attributes);
-    }
-
     protected function get_content_text_video($file, $height = null)
     {
         $styles = [
@@ -175,6 +158,27 @@ class block_file extends block_base
         ];
 
         return html_writer::empty_tag('img', $attributes);
+    }
+
+    protected function get_content_text_viewerjs($file, $height = null)
+    {
+        $styles = [
+            'width' => '100%',
+            'height' => '100%',
+        ];
+
+        if ($height !== null) {
+            $styles['min-height'] = $height;
+        }
+
+        $viewerUrl = new moodle_url('/blocks/file/viewerjs/index.html', null, $this->get_file_url($file));
+
+        $attributes = [
+            'src' => $viewerUrl,
+            'style' => $this->build_style_attribute($styles),
+        ];
+
+        return html_writer::tag('iframe', $this->get_content_text_default($file, $height), $attributes);
     }
 
     protected function get_file_url($file)
