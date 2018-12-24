@@ -98,13 +98,23 @@ class block_file extends block_base
 
     protected function get_content_text_pdf($file, $height = null)
     {
-        $attributes = [
+        $styles = [
             'width' => '100%',
-            'src' => $this->get_file_url($file),
+            'height' => '100%',
         ];
+
         if ($height !== null) {
-            $attributes['style'] = 'min-height:' . $height;
+            $styles['min-height'] = $height;
         }
+
+        $viewerUrl = new moodle_url('/blocks/file/pdfjs/web/viewer.html');
+        $viewerUrl->param('file', $this->get_file_url($file));
+
+        $attributes = [
+            'src' => $viewerUrl,
+            'style' => $this->build_style_attribute($styles),
+        ];
+
         return html_writer::tag('iframe', '', $attributes);
     }
 
