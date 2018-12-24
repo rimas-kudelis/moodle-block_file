@@ -82,6 +82,19 @@ class block_file extends block_base
                 break;
             }
 
+            if (in_array($mimeType, [
+                'image/gif',
+                'image/png',
+                'image/jpeg',
+                'image/svg+xml',
+            ])) {
+                $content = $this->get_content_text_image($file, $height);
+
+                $content = format_text($content, FORMAT_HTML, $filterOptions);
+
+                break;
+            }
+
             $content = $this->get_content_text_default($file, $height);
             $content = format_text($content, FORMAT_HTML, $filterOptions);
             break;
@@ -147,6 +160,21 @@ class block_file extends block_base
         ];
 
         return html_writer::tag('audio', '', $attributes);
+    }
+
+    protected function get_content_text_image($file, $height = null)
+    {
+        $styles = [
+            'width' => '100%',
+        ];
+
+        $attributes = [
+            'style' => $this->build_style_attribute($styles),
+            'src' => $this->get_file_url($file),
+            'alt' => $file->get_filename(),
+        ];
+
+        return html_writer::empty_tag('img', $attributes);
     }
 
     protected function get_file_url($file)
