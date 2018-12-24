@@ -45,26 +45,55 @@ class block_file extends block_base
         $fs = get_file_storage();
         $files = $fs->get_area_files($this->context->id, 'block_file', 'file', 0);
 
+        $content = null;
+
         foreach ($files as $file) {
             if ($file->is_directory()) {
                 continue;
             }
 
+            $filterOptions = new stdClass;
+            // $filterOptions->overflowdiv = true;
+            $filterOptions->noclean = true;
+
             $mimeType = $file->get_mimetype();
 
             if ($mimeType === 'application/pdf') {
                 $content = $this->get_content_text_pdf($file, $height);
+
+                $content = format_text($content, FORMAT_HTML, $filterOptions);
+
                 break;
             }
 
             if (substr($mimeType, 0, 5) === 'video') {
                 $content = $this->get_content_text_video($file, $height);
+
+                $content = format_text($content, FORMAT_HTML, $filterOptions);
+
                 break;
             }
+
+            if (substr($mimeType, 0, 5) === 'audio') {
+                $content = $this->get_content_text_audio($file, $height);
+
+                $content = format_text($content, FORMAT_HTML, $filterOptions);
+
+                break;
+            }
+
+            $content = $this->get_content_text_default($file, $height);
+            $content = format_text($content, FORMAT_HTML, $filterOptions);
+            break;
         }
 
-        $this->content->text = (! empty($content)) ? $content : 'No file has been selected for display!';
+        $this->content->text = $content ?? get_string('nofileselected', 'block_file');
         return $this->content;
+    }
+
+    protected function get_content_text_default($file, $height = null)
+    {
+        return html_writer::tag('a', $file->get_filename(), ['href' => $this->get_file_url($file)]);
     }
 
     protected function get_content_text_pdf($file, $height = null)
@@ -81,17 +110,46 @@ class block_file extends block_base
 
     protected function get_content_text_video($file, $height = null)
     {
-        $attributes = [
+        $styles = [
             'width' => '100%',
+        //     'height' => '100%',
+        ];
+
+        $attributes = [
             'controls' => '',
+            'style' => $this->build_style_attribute($styles),
             'src' => $this->get_file_url($file),
         ];
 
         return html_writer::tag('video', '', $attributes);
     }
 
+    protected function get_content_text_audio($file, $height = null)
+    {
+        $styles = [
+            'width' => '100%',
+        ];
+
+        $attributes = [
+            'controls' => '',
+            'style' => $this->build_style_attribute($styles),
+            'src' => $this->get_file_url($file),
+        ];
+
+        return html_writer::tag('audio', '', $attributes);
+    }
+
     protected function get_file_url($file)
     {
         return moodle_url::make_pluginfile_url($file->get_contextid(), $file->get_component(), $file->get_filearea(), ($file->get_itemid() !== '0' ? $file->get_itemid() : null), $file->get_filepath(), $file->get_filename());
+    }
+
+    protected function build_style_attribute($style)
+    {
+        $rules = [];
+        foreach ($style as $key => $value) {
+            $rules[] = "$key: $value";
+        }
+        return implode('; ', $rules);
     }
 }
