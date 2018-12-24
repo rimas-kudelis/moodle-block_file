@@ -128,7 +128,7 @@ class block_file extends block_base
             'style' => $this->build_style_attribute($styles),
         ];
 
-        return html_writer::tag('iframe', '', $attributes);
+        return html_writer::tag('iframe', $this->get_content_text_default($file, $height), $attributes);
     }
 
     protected function get_content_text_video($file, $height = null)
